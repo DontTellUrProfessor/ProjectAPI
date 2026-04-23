@@ -20,14 +20,13 @@ namespace ProjectAPI.Controllers
 
         [Route("building/{BuildingCode}")]
         [HttpGet]
-        public IActionResult GetByBuilding([FromRoute] string BuildingCode)
+        public IActionResult GetByBuilding([FromRoute] string buildingCode)
         {
-            var rooms = DataStorage.Rooms.Where(r => r.BuildingCode == BuildingCode);
+            var rooms = DataStorage.Rooms.Where(r => r.BuildingCode == buildingCode);
             return Ok(rooms);
         }
         
         
-        //GET api/rooms/{id}
         [Route("{id}")]
         [HttpGet]
         public IActionResult Get([FromRoute]int id)
@@ -59,6 +58,21 @@ namespace ProjectAPI.Controllers
             currentRoom.HasProjector =  room.HasProjector;
 
             return Ok(currentRoom);
+        }
+
+        [Route("{id}")]
+        [HttpDelete]
+        public IActionResult Delete([FromRoute] int id)
+        {
+            var room = DataStorage.Rooms.FirstOrDefault(r => r.Id == id);
+            if(room == null) return NotFound();
+            
+            var reservations = DataStorage.Reservations
+                .Where(r => r.RoomId == id && r.Date >= DateOnly.FromDateTime(DateTime.Now));
+            if(reservations.Any()) return Conflict();
+            
+            DataStorage.Rooms.Remove(room);
+            return NoContent();
         }
     }
 }
